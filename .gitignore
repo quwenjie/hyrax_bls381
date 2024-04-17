@@ -5,3 +5,8 @@ lib/
 *.a
 *.cmake
 CMakeFiles/
+lib/
+3rd/
+CMakeCache.txt
+src/hyrax_time
+src/Makefile

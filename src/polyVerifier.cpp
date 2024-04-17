@@ -3,6 +3,8 @@
 //
 
 #include "polyVerifier.hpp"
+#include<iostream>
+using namespace std;
 
 namespace hyrax_bls12_381 {
     polyVerifier::polyVerifier(polyProver &_p, const vector<G1> &_gens) : p(_p), gens(_gens) {
@@ -41,38 +43,40 @@ namespace hyrax_bls12_381 {
         assert(checkPow2(g.size()));
         auto logn = t.size();
         while (true) {
-            p.bulletProve(lcomm, rcomm, ly, ry);
-
+            p.bulletProve(lcomm, rcomm, ly, ry);// lcomm = g dot a, rcomm = g+h dot a+h
+            //ly = a dot L, ry=a+h dot L
             Fr randomness;
             randomness.setByCSPRNG();
             Fr irandomness;
             Fr::inv(irandomness, randomness);
 
-            p.bulletUpdate(randomness);
+            p.bulletUpdate(randomness);  //prover update gens by ir, a by r 
 
             u64 hsize = g.size() >> 1;
             for (u64 i = 0; i < hsize; ++i)
-                g[i] = g[i] * irandomness + g[i + hsize];
+                g[i] = g[i] * irandomness + g[i + hsize];  // verifier update gens by ir
             g.resize(hsize);
 
             comm = lcomm * randomness + comm + rcomm * irandomness;
-            if (y != ly * (Fr::one() - t.back()) + ry * t.back()) 
+            if (y != ly * (Fr::one() - t.back()) + ry * t.back()) //first step y is RZL, first ly ry 
             {
                 fprintf(stderr, "y incorrect at %d.\n", (int) (logn - t.size()));
                 return false;
             }
 
-            y = ly * randomness + ry;
+            y = ly * randomness + ry;  // (a*r + (a+h)) dot L 
 
             if (t.size() == 1) 
             {
-                bool res = p.bulletOpen() == y && comm == g.back() * y;
+                bool res = p.bulletOpen() == y ;  // this passes which means the folding of a is correct , and also y 
+                bool res2=  comm == g.back() * y;  // this indicates that the folding of g may be problematic
 
                 tmp_timer.stop();
                 fprintf(stderr, "bulletProve time: %.4f\n", tmp_timer.elapse_sec());
 
-                if (!res) 
+                if (!res || !res2) 
                 {
+                    cerr<<"assert "<<res<<" "<<res2<<endl;
                     fprintf(stderr, "last step incorrect.\n");
                     return false;
                 }
