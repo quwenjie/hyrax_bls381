@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/hyrax_time.dir/main.cpp.o -o hyrax_time  -Wl,-rpath,/mnt/c/Users/admin/hyrax-bls12-381/lib libhyrax_lib.a ../lib/libmclbn384_256.so.1.74 ../lib/libmcl.so.1.74 
