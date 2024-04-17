@@ -56,19 +56,23 @@ namespace hyrax_bls12_381 {
             g.resize(hsize);
 
             comm = lcomm * randomness + comm + rcomm * irandomness;
-            if (y != ly * (Fr::one() - t.back()) + ry * t.back()) {
+            if (y != ly * (Fr::one() - t.back()) + ry * t.back()) 
+            {
                 fprintf(stderr, "y incorrect at %d.\n", (int) (logn - t.size()));
                 return false;
             }
+
             y = ly * randomness + ry;
 
-            if (t.size() == 1) {
+            if (t.size() == 1) 
+            {
                 bool res = p.bulletOpen() == y && comm == g.back() * y;
 
                 tmp_timer.stop();
                 fprintf(stderr, "bulletProve time: %.4f\n", tmp_timer.elapse_sec());
 
-                if (!res) {
+                if (!res) 
+                {
                     fprintf(stderr, "last step incorrect.\n");
                     return false;
                 }

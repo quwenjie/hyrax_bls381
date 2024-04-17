@@ -1,0 +1,2 @@
+/usr/bin/ar qc libhyrax_lib.a CMakeFiles/hyrax_lib.dir/polyProver.cpp.o CMakeFiles/hyrax_lib.dir/polyVerifier.cpp.o CMakeFiles/hyrax_lib.dir/timer.cpp.o CMakeFiles/hyrax_lib.dir/utils.cpp.o
+/usr/bin/ranlib libhyrax_lib.a
