@@ -1,8 +1,5 @@
 #define DEBUG
-#include <iostream>
-#include <vector>
-#include <mcl/bls12_381.hpp>
-#include "timer.hpp"
+#include "hyrax.hpp"
 using namespace std;
 using namespace mcl::bn;
 
@@ -86,35 +83,9 @@ G1 gen_gi(G1* g,int n)
     }
     return base;
 }
-struct Pack 
-{
-    G1 gamma;
-    Fr a;
-    G1 g;
-    Fr y;
-    Fr x;
-    Pack(G1 gamm,Fr fa, G1 gg,Fr xx,Fr yy)
-    {
-        gamma=gamm;
-        a=fa;
-        g=gg;
-        x=xx;
-        y=yy;
-    }
-};
-struct Hyrax_proof
-{
-    //transmitted data
-    G1 tprime, comm_w;
-    //public data
-    G1 *g, G;
-    Fr* R;
-    //prover only data
-    Fr* LT;
-    Fr eval;
 
-};
-Pack bullet_reduce(G1 gamma, Fr*a,G1*g,int n,G1& G,Fr* x,Fr y,bool need_free=false) // length n
+
+Pack bullet_reduce(G1 gamma, Fr*a,G1*g,int n,G1& G,Fr* x,Fr y,bool need_free) // length n
 {
     if(n==1)
     {
@@ -200,24 +171,3 @@ Hyrax_proof prover_commit(Fr* w, Fr* r, G1& G,G1* g, Fr*L,Fr*R,int l)
 }
 
 
-const int MAXL=26;
-Fr w[(1<<MAXL)],r[MAXL],L[1<<(MAXL/2)],R[1<<(MAXL/2)];
-G1 g[1<<(MAXL/2)];
-
-int main(int argc, char *argv[])
-{
-    initPairing(mcl::BLS12_381);
-    int l=24;
-    for(int i=0;i<(1<<l);i++)
-        w[i]=rand()%65535-30000;
-
-    for(int i=0;i<l;i++)
-        r[i].setByCSPRNG();
-    G1 G=gen_gi(g,1<<(l/2));
-    timer t;
-    t.start();
-    Hyrax_proof proof=prover_commit(w,r,G,g,L,R,l);
-    prove_dot_product(proof.tprime,proof.comm_w,proof.R,proof.g,proof.G,proof.LT,proof.eval,(1<<(l/2)));  // tprime, comm_w ,R,g,G public, LT eval only prover knows
-    t.stop("All time: ");
-    return 0;
-}

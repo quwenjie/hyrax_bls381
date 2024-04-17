@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(hyrax_bls12_381)
 set(CMAKE_CXX_STANDARD 14)
+set (CMAKE_CXX_FLAGS "-mcmodel=large -O2")
 
 include_directories(src)
 include_directories(3rd/mcl/include)
