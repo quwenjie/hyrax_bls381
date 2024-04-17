@@ -199,12 +199,15 @@ Hyrax_proof prover_commit(Fr* w, Fr* r, G1& G,G1* g, Fr*L,Fr*R,int l)
     //assert(wr==eval);  // LT dot R = eval
 }
 
-const int l=20;
-Fr w[(1<<l)],r[l],L[1<<(l/2)],R[1<<(l/2)];
-G1 g[1<<(l/2)];
+
+const int MAXL=26;
+Fr w[(1<<MAXL)],r[MAXL],L[1<<(MAXL/2)],R[1<<(MAXL/2)];
+G1 g[1<<(MAXL/2)];
+
 int main(int argc, char *argv[])
 {
     initPairing(mcl::BLS12_381);
+    int l=24;
     for(int i=0;i<(1<<l);i++)
         w[i]=rand()%65535-30000;
 
