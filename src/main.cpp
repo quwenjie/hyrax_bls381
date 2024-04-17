@@ -17,7 +17,7 @@ G1 g[1<<(MAXL/2)];
 int main(int argc, char *argv[])
 {
     initPairing(mcl::BLS12_381);
-    int l=24;
+    int l=18;
     for(int i=0;i<(1<<l);i++)
         w[i]=rand()%65535-30000;
 
@@ -26,8 +26,9 @@ int main(int argc, char *argv[])
     G1 G=gen_gi(g,1<<(l/2));
     timer t;
     t.start();
-    Hyrax_proof proof=prover_commit(w,r,G,g,L,R,l);
-    prove_dot_product(proof.tprime,proof.comm_w,proof.R,proof.g,proof.G,proof.LT,proof.eval,(1<<(l/2)));  // tprime, comm_w ,R,g,G public, LT eval only prover knows
+    G1*tk=prover_commit(w,g,l);
+    Fr eva=prover_evaluate(w,r,G,g,L,R,l);
+    verify(w,r,eva,G,g,L,R,tk,l);  // tprime, comm_w ,R,g,G public, LT eval only prover knows
     t.stop("All time: ");
     return 0;
 }

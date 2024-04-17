@@ -36,8 +36,7 @@ Fr brute_force_compute_eval(Fr* w,Fr* r,int l)
         ret+=lagrange(r,l,k)*w[k];
     return ret;
 }
-
-G1 compute_Tprime(Fr* w,Fr* r,int l,G1* g,Fr* L) 
+G1* compute_Tk(Fr* w,int l,G1* g) 
 {
     //w has 2^l length
     assert(l%2==0);
@@ -45,16 +44,29 @@ G1 compute_Tprime(Fr* w,Fr* r,int l,G1* g,Fr* L)
     int rownum=(1<<halfl),colnum=(1<<halfl);
     G1 *Tk=new G1[rownum];
     Fr* row=new Fr[1<<halfl];
+    timer t;
+    t.start();
     for(int i=0;i<rownum;i++) // enumerate row of T  
     {
         for(int j=0;j<colnum;j++)// enum col
             row[j]=w[i+j*rownum];
         Tk[i]=perdersen_commit(g,row,colnum);
     }
-    G1 ret=perdersen_commit(Tk,L,rownum);
+    t.stop("commit time ");
     delete []row;
+    return Tk;
+}
+
+G1 compute_Tprime(Fr* w,Fr* r,int l,G1* g,Fr* L,G1* Tk) 
+{
+    //w has 2^l length
+    assert(l%2==0);
+    int halfl=l/2;
+    int rownum=(1<<halfl),colnum=(1<<halfl);
+    G1 ret=perdersen_commit(Tk,L,rownum);
     return ret;
 }
+
 G1 compute_LT(Fr*w ,Fr*L,int l,G1*g,Fr*& ret) // L is row number length
 {
     int halfl=l/2;
@@ -144,30 +156,33 @@ bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n
     assert(p.gamma==p.g*p.x+G*p.y);
     return true;
 }
-
-Hyrax_proof prover_commit(Fr* w, Fr* r, G1& G,G1* g, Fr*L,Fr*R,int l)
+G1* prover_commit(Fr* w, G1* g, int l)
+{
+    return compute_Tk(w,l,g);
+}
+Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l)
 {
     int halfl=l/2;
     int rownum=(1<<halfl),colnum=(1<<halfl);
-    Fr* LT;
     timer t(true);
     t.start();
     brute_force_compute_LR(L,R,r,l);
     t.stop("brute force LR ",false);
-    G1 tprime=compute_Tprime(w,r,l,g,L);
-    t.stop("Tprime ",false);
     Fr eval=brute_force_compute_eval(w,r,l);
     t.stop("eval ",false);
-    G1 tprime2=compute_LT(w,L,l,g,LT);
-    t.stop("LT ",false);
-    assert(tprime==tprime2);
-    G1 comm_w=G*eval;
-    t.stop("total ",true,false);
-    Hyrax_proof h{tprime,comm_w,g,G,R,LT,eval};
-    return h;
-    //for(int i=0;i<colnum;i++)
-    //    wr+=LT[i]*R[i];
-    //assert(wr==eval);  // LT dot R = eval
+    t.stop("eval total ",true,false);
+    return eval;
 }
-
-
+void verify(Fr*w,Fr*r,Fr eval,G1&G,G1*g,Fr*L,Fr*R,G1*tk,int l)
+{
+    int halfl=l/2;
+    int rownum=(1<<halfl),colnum=(1<<halfl);
+    Fr* LT=new Fr[colnum];
+    timer t;
+    t.start();
+    compute_LT(w,L,l,g,LT);
+    t.stop("prover compute LT ",false);
+    G1 tprime=compute_Tprime(w,r,l,g,L,tk);
+    t.stop("merge Tprime ",false);
+    prove_dot_product(tprime, G*eval, R, g , G,LT,eval,colnum);
+}
