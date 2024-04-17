@@ -10,11 +10,12 @@
 
 class timer {
 public:
-    timer() { total_time_sec = 0; status = false;}
+    timer(bool accumulate_=false) { total_time_sec = 0; status = false; accumulate=accumulate_;}
     void start();
-    void stop();
+    void stop(const char* out,bool total=true,bool restart=true);
     void clear() { total_time_sec = 0; status = false;}
-    double elapse_sec() const {
+    double elapse_sec() const 
+    {
         assert(status == false);
         return total_time_sec;
     }
@@ -22,6 +23,7 @@ private:
     std::chrono::high_resolution_clock::time_point t0;
     double total_time_sec;
     bool status;
+    bool accumulate;
 };
 
 
