@@ -7,49 +7,35 @@ This scheme is particularly for multi-linear extension of an array.
 ## Usage
 You can use this polynomial commitment in this way:
 ```C++
+#define DEBUG
+#include <mcl/bls12_381.hpp>
+#include <iostream>
+#include "hyrax.hpp"
+using namespace std;
 
-#include <bits/stdc++.h>
+using namespace mcl::bn;
+using namespace hyrax;
 
-// Include the header
-#include <hyrax-bls12-381/polyCommit.hpp>
+const int MAXL=26;
+Fr w[(1<<MAXL)],r[MAXL],L[1<<(MAXL/2)],R[1<<(MAXL/2)];
+G1 g[1<<(MAXL/2)];
 
-#define F Fr  // This is the field on which the polynomial is defined.
-#define G G1  // BLS12-381 is friendly to pairing, but here we only use G1.
-#define F_ONE (Fr::one())
-#define F_ZERO (Fr(0))
-
-int main() {
-    u64 n = 1 << 10;
-    int logn = 10;
-    
-    // Initialize the polynomial coefficients and evaluation point.
-    vector<F> polynomial(n), eval_point(logn);
-    for (auto &x: polynomial) x.setByCSPRNG();
-    for (auto &x: eval_point) x.setByCSPRNG();
-    
-    // Initialize the structure setting.
+int main(int argc, char *argv[])
+{
     initPairing(mcl::BLS12_381);
+    int l=18;
+    for(int i=0;i<(1<<l);i++)
+        w[i]=rand()%65535-30000;
 
-    // Generate the generators used in Hyrax.
-    u64 n_sqrt = 1ULL << (logn - (logn >> 1));
-    vector<G> gens(n_sqrt);
-    for (auto &x: gens) {
-        F tmp;
-        tmp.setByCSPRNG();
-        x = mcl::bn::getG1basePoint() * tmp;
-    }
-    
-    // Initialize the prover.
-    hyrax_bls12_381::polyProver poly_p(polynomial, gens);
-    
-    // Calculate the evaluation
-    F eval_value = poly_p.evaluate(eval_point);
-    
-    // Initialize the verifier and verify the evaluation value.
-    hyrax_bls12_381::polyVerifier poly_v(poly_p, gens);
-    if (poly_v.verify(eval_point, eval_value)) std::cout << "Correct!" << std::endl;
-    else std::cout << "Incorrect!" << std::endl;
-    
+    for(int i=0;i<l;i++)
+        r[i].setByCSPRNG();
+    G1 G=gen_gi(g,1<<(l/2));
+    timer t;
+    t.start();
+    G1*tk=prover_commit(w,g,l);
+    Fr eva=prover_evaluate(w,r,G,g,L,R,l);
+    hyrax::verify(w,r,eva,G,g,L,R,tk,l);  // tprime, comm_w ,R,g,G public, LT eval only prover knows
+    t.stop("All time: ");
     return 0;
 }
 ```
