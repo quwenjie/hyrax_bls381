@@ -13,6 +13,7 @@ public:
     timer(bool accumulate_=false) { total_time_sec = 0; status = false; accumulate=accumulate_;}
     void start();
     void stop(const char* out,bool total=true,bool restart=true);
+    void stop();
     void clear() { total_time_sec = 0; status = false;}
     double elapse_sec() const 
     {

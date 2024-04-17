@@ -8,7 +8,7 @@
 using namespace std;
 
 using namespace mcl::bn;
-
+using namespace hyrax;
 
 const int MAXL=26;
 Fr w[(1<<MAXL)],r[MAXL],L[1<<(MAXL/2)],R[1<<(MAXL/2)];
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     t.start();
     G1*tk=prover_commit(w,g,l);
     Fr eva=prover_evaluate(w,r,G,g,L,R,l);
-    verify(w,r,eva,G,g,L,R,tk,l);  // tprime, comm_w ,R,g,G public, LT eval only prover knows
+    hyrax::verify(w,r,eva,G,g,L,R,tk,l);  // tprime, comm_w ,R,g,G public, LT eval only prover knows
     t.stop("All time: ");
     return 0;
 }

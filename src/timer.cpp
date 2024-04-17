@@ -34,3 +34,7 @@ void timer::stop(const char* output,bool total,bool restart)
     if(restart)
         start();
 }
+void timer::stop()
+{
+    stop("",true,false);
+} 

@@ -3,6 +3,7 @@
 #include <vector>
 #include <mcl/bls12_381.hpp>
 #include "timer.hpp"
+#include "typedef.hpp"
 using namespace std;
 using namespace mcl::bn;
 struct Hyrax_first_round
@@ -48,4 +49,7 @@ Pack bullet_reduce(G1 gamma, Fr*a,G1*g,int n,G1& G,Fr* x,Fr y,bool need_free=fal
 bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n);
 G1* prover_commit(Fr* w, G1* g, int l);
 Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l);
+namespace hyrax
+{
 void verify(Fr*w,Fr*r,Fr eval,G1&G,G1*g,Fr*L,Fr*R,G1*tk,int l);
+}

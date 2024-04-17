@@ -173,6 +173,8 @@ Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l)
     t.stop("eval total ",true,false);
     return eval;
 }
+namespace hyrax
+{
 void verify(Fr*w,Fr*r,Fr eval,G1&G,G1*g,Fr*L,Fr*R,G1*tk,int l)
 {
     int halfl=l/2;
@@ -185,4 +187,5 @@ void verify(Fr*w,Fr*r,Fr eval,G1&G,G1*g,Fr*L,Fr*R,G1*tk,int l)
     G1 tprime=compute_Tprime(w,r,l,g,L,tk);
     t.stop("merge Tprime ",false);
     prove_dot_product(tprime, G*eval, R, g , G,LT,eval,colnum);
+}
 }
