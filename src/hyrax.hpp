@@ -1,4 +1,5 @@
-#pragma once
+#ifndef HYRAX_DEFINE
+#define HYRAX_DEFINE
 #include <iostream>
 #include <vector>
 #include <mcl/bls12_381.hpp>
@@ -38,18 +39,20 @@ struct Pack
     }
 };
 G1 perdersen_commit(G1* g,Fr* f,int n);
+G1 perdersen_commit(G1* g,int* f,int n,G1* W=NULL); //optimized using pippenger
 Fr lagrange(Fr *r,int l,int k);
 void brute_force_compute_LR(Fr* L,Fr* R,Fr* r,int l);
 Fr brute_force_compute_eval(Fr* w,Fr* r,int l);
-G1* compute_Tk(Fr* w,int l,G1* g);
 G1 compute_Tprime(Fr* w,Fr* r,int l,G1* g,Fr* L,G1* Tk) ;
 G1 compute_LT(Fr*w ,Fr*L,int l,G1*g,Fr*& ret);
 G1 gen_gi(G1* g,int n);
 Pack bullet_reduce(G1 gamma, Fr*a,G1*g,int n,G1& G,Fr* x,Fr y,bool need_free=false);
 bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n);
-G1* prover_commit(Fr* w, G1* g, int l);
-Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l);
+G1* prover_commit(Fr* w, G1* g, int l,int opt=0);
+G1* prover_commit(int* w, G1* g, int l,int opt=0);
+Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l);  // nlogn brute force 
 namespace hyrax
 {
 void verify(Fr*w,Fr*r,Fr eval,G1&G,G1*g,Fr*L,Fr*R,G1*tk,int l);
 }
+#endif

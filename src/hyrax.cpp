@@ -1,14 +1,72 @@
 #define DEBUG
 #include "hyrax.hpp"
+#include <cmath>
 using namespace std;
 using namespace mcl::bn;
 
+const int MAX_MSM_LEN=1e4;
+const int COMM_OPT_MAX=1e5; //don't optimize if larger than this
+const int logmax=18;  /// max number=2^18-1
+
+inline G1 perdersen_commit(G1* g,int* f,int n,G1* W)
+{
+    G1 ret;
+    ret.clear();
+    
+    int vi[MAX_MSM_LEN]={0};
+    bool sign[MAX_MSM_LEN]={0};
+    //timer t(true);
+    //t.start();
+    bool *used=new bool[COMM_OPT_MAX];
+    memset(used,0,sizeof(bool)*COMM_OPT_MAX);
+    for(int i=0;i<n;i++)
+    {
+            if(f[i]==0)
+                continue;
+            
+            if(f[i]<0)
+            {
+                W[-f[i]]-=g[i];
+                used[-f[i]]=1;
+            }
+            else
+            {
+                W[f[i]]+=g[i];
+                used[f[i]]=1;
+            }
+    }
+    //t.stop("add ",false);
+    const int logn=log2(COMM_OPT_MAX)+1;
+    G1 gg[logmax];
+    for(int j=0;j<logmax;j++)
+        gg[j].clear();
+    for(int j=1;j<COMM_OPT_MAX;j++)
+    {
+        if(used[j])
+        {
+            for(int k=0;k<logn;k++)
+            {
+                if(j&(1<<k))
+                    gg[k]+=W[j];
+            }
+            W[j].clear();
+            used[j]=0;            
+        }
+    }
+    for(int j=0;j<logmax;j++)
+        ret+=gg[j]*(1<<j);
+    //t.stop("accu",false);
+    //t.stop("ALL: ",true);
+    delete []used;
+    return ret;
+}
 inline G1 perdersen_commit(G1* g,Fr* f,int n)
 {
     G1 ret;
     G1::mulVec(ret,g,f,n);
     return ret;
 }
+
 Fr lagrange(Fr *r,int l,int k)
 {
     assert(k>=0 && k<(1<<l));
@@ -36,26 +94,7 @@ Fr brute_force_compute_eval(Fr* w,Fr* r,int l)
         ret+=lagrange(r,l,k)*w[k];
     return ret;
 }
-G1* compute_Tk(Fr* w,int l,G1* g) 
-{
-    //w has 2^l length
-    assert(l%2==0);
-    int halfl=l/2;
-    int rownum=(1<<halfl),colnum=(1<<halfl);
-    G1 *Tk=new G1[rownum];
-    Fr* row=new Fr[1<<halfl];
-    timer t;
-    t.start();
-    for(int i=0;i<rownum;i++) // enumerate row of T  
-    {
-        for(int j=0;j<colnum;j++)// enum col
-            row[j]=w[i+j*rownum];
-        Tk[i]=perdersen_commit(g,row,colnum);
-    }
-    t.stop("commit time ");
-    delete []row;
-    return Tk;
-}
+
 
 G1 compute_Tprime(Fr* w,Fr* r,int l,G1* g,Fr* L,G1* Tk) 
 {
@@ -154,13 +193,60 @@ bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n
     Pack p=bullet_reduce(gamma,a,g,n,G,x,y);
     assert(p.y==p.x*p.a);
     assert(p.gamma==p.g*p.x+G*p.y);
+    cout<<"Hyrax: All check passed!!!"<<endl;
     return true;
 }
-G1* prover_commit(Fr* w, G1* g, int l)
+G1* prover_commit(Fr* w, G1* g, int l,int opt) //compute Tk
 {
-    return compute_Tk(w,l,g);
+    //w has 2^l length
+    assert(l%2==0);
+    int halfl=l/2;
+    int rownum=(1<<halfl),colnum=(1<<halfl);
+    G1 *Tk=new G1[rownum];
+    Fr* row=new Fr[1<<halfl];
+    timer t;
+    t.start();
+    const int thread_num=1;
+    G1 *W=new G1[COMM_OPT_MAX*thread_num];
+    memset(W,0,sizeof(G1)*COMM_OPT_MAX*thread_num);
+    for(int i=0;i<rownum;i++) // enumerate row of T  
+    {
+        for(int j=0;j<colnum;j++)// enum col
+            row[j]=w[i+j*rownum];
+        Tk[i]=perdersen_commit(g,row,colnum); // each thread use a different W
+    }
+    t.stop("commit time ");
+    delete []W;
+    delete []row;
+    return Tk;
 }
-Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l)
+
+G1* prover_commit(int* w, G1* g, int l,int opt) //compute Tk, int version with pippenger
+{
+    //w has 2^l length
+    assert(l%2==0);
+    int halfl=l/2;
+    int rownum=(1<<halfl),colnum=(1<<halfl);
+    G1 *Tk=new G1[rownum];
+    int* row=new int[1<<halfl];
+    timer t;
+    t.start();
+    const int thread_num=1;
+    G1 *W=new G1[COMM_OPT_MAX*thread_num];
+    memset(W,0,sizeof(G1)*COMM_OPT_MAX*thread_num);
+    for(int i=0;i<rownum;i++) // enumerate row of T  
+    {
+        for(int j=0;j<colnum;j++)// enum col
+            row[j]=w[i+j*rownum];
+        Tk[i]=perdersen_commit(g,row,colnum,W); // each thread use a different W
+    }
+    t.stop("commit time(PPG) ");
+    delete []W;
+    delete []row;
+    return Tk;
+}
+
+Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l)  // nlogn brute force 
 {
     int halfl=l/2;
     int rownum=(1<<halfl),colnum=(1<<halfl);
