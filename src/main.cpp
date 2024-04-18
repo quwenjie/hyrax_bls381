@@ -19,7 +19,7 @@ G1 g[1<<(MAXL/2)];
 int main(int argc, char *argv[])
 {
     initPairing(mcl::BLS12_381);
-    int l=26;
+    int l=20;
     for(int i=0;i<(1<<l);i++)
     {
         ww[i]=rand()%600-300;

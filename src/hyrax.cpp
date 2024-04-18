@@ -196,50 +196,52 @@ bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n
     cout<<"Hyrax: All check passed!!!"<<endl;
     return true;
 }
-G1* prover_commit(Fr* w, G1* g, int l,int opt) //compute Tk
+ThreadSafeQueue<int> workerq,endq;
+
+G1* prover_commit(Fr* w, G1* g, int l,int thread_n) //compute Tk
 {
     //w has 2^l length
     assert(l%2==0);
     int halfl=l/2;
     int rownum=(1<<halfl),colnum=(1<<halfl);
     G1 *Tk=new G1[rownum];
-    Fr* row=new Fr[1<<halfl];
+    Fr* row=new Fr[1<<l];
     timer t;
     t.start();
-    const int thread_num=1;
-    G1 *W=new G1[COMM_OPT_MAX*thread_num];
-    memset(W,0,sizeof(G1)*COMM_OPT_MAX*thread_num);
+    G1 *W=new G1[COMM_OPT_MAX*thread_n];
+    memset(W,0,sizeof(G1)*COMM_OPT_MAX*thread_n);
     for(int i=0;i<rownum;i++) // enumerate row of T  
     {
         for(int j=0;j<colnum;j++)// enum col
-            row[j]=w[i+j*rownum];
-        Tk[i]=perdersen_commit(g,row,colnum); // each thread use a different W
+            row[i*colnum+j]=w[i+j*rownum];
     }
+    for(int i=0;i<rownum;i++) // enumerate row of T  
+        Tk[i]=perdersen_commit(g,row+i*colnum,colnum); // each thread use a different W
     t.stop("commit time ");
     delete []W;
     delete []row;
     return Tk;
 }
 
-G1* prover_commit(int* w, G1* g, int l,int opt) //compute Tk, int version with pippenger
+G1* prover_commit(int* w, G1* g, int l,int thread_n) //compute Tk, int version with pippenger
 {
     //w has 2^l length
     assert(l%2==0);
     int halfl=l/2;
     int rownum=(1<<halfl),colnum=(1<<halfl);
     G1 *Tk=new G1[rownum];
-    int* row=new int[1<<halfl];
+    int* row=new int[1<<l];
     timer t;
     t.start();
-    const int thread_num=1;
-    G1 *W=new G1[COMM_OPT_MAX*thread_num];
-    memset(W,0,sizeof(G1)*COMM_OPT_MAX*thread_num);
+    G1 *W=new G1[COMM_OPT_MAX*thread_n];
+    memset(W,0,sizeof(G1)*COMM_OPT_MAX*thread_n);
     for(int i=0;i<rownum;i++) // enumerate row of T  
     {
         for(int j=0;j<colnum;j++)// enum col
-            row[j]=w[i+j*rownum];
-        Tk[i]=perdersen_commit(g,row,colnum,W); // each thread use a different W
+            row[i*colnum+j]=w[i+j*rownum];
     }
+    for(int i=0;i<rownum;i++) // enumerate row of T  
+        Tk[i]=perdersen_commit(g,row+i*colnum,colnum,W); // each thread use a different W
     t.stop("commit time(PPG) ");
     delete []W;
     delete []row;
