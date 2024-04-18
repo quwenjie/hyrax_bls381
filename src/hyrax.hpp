@@ -97,6 +97,11 @@ public:
         lock_guard<mutex> lock(mutex_);
         return queue_.size();
     }
+    void Clear()  
+    {
+        lock_guard<mutex> lock(mutex_);
+        queue_={};
+    }
 
 private:
     mutable mutex mutex_;

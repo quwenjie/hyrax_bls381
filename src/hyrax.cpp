@@ -12,9 +12,6 @@ inline G1 perdersen_commit(G1* g,int* f,int n,G1* W)
 {
     G1 ret;
     ret.clear();
-    
-    int vi[MAX_MSM_LEN]={0};
-    bool sign[MAX_MSM_LEN]={0};
     //timer t(true);
     //t.start();
     bool *used=new bool[COMM_OPT_MAX];
@@ -28,11 +25,13 @@ inline G1 perdersen_commit(G1* g,int* f,int n,G1* W)
             {
                 W[-f[i]]-=g[i];
                 used[-f[i]]=1;
+                assert(-f[i]<COMM_OPT_MAX);
             }
             else
             {
                 W[f[i]]+=g[i];
                 used[f[i]]=1;
+                assert(f[i]<COMM_OPT_MAX);
             }
     }
     //t.stop("add ",false);
@@ -222,7 +221,18 @@ G1* prover_commit(Fr* w, G1* g, int l,int thread_n) //compute Tk
     delete []row;
     return Tk;
 }
-
+void int_commit_worker(G1*& Tk,G1*& g, int*& row,int colnum,G1*& W)
+{
+    int idx;
+    while (true)
+    {
+            bool ret=workerq.TryPop(idx);
+            if(ret==false)
+                return;
+            Tk[idx]=perdersen_commit(g,row+idx*colnum,colnum,W);
+            endq.Push(idx);
+    }
+}
 G1* prover_commit(int* w, G1* g, int l,int thread_n) //compute Tk, int version with pippenger
 {
     //w has 2^l length
@@ -233,17 +243,35 @@ G1* prover_commit(int* w, G1* g, int l,int thread_n) //compute Tk, int version w
     int* row=new int[1<<l];
     timer t;
     t.start();
-    G1 *W=new G1[COMM_OPT_MAX*thread_n];
-    memset(W,0,sizeof(G1)*COMM_OPT_MAX*thread_n);
+    G1** W=new G1*[thread_n];
+    for(int i=0;i<thread_n;i++)
+        W[i]=new G1[COMM_OPT_MAX];
+    for(int i=0;i<thread_n;i++)
+        memset(W[i],0,sizeof(G1)*COMM_OPT_MAX);
     for(int i=0;i<rownum;i++) // enumerate row of T  
     {
         for(int j=0;j<colnum;j++)// enum col
             row[i*colnum+j]=w[i+j*rownum];
     }
-    for(int i=0;i<rownum;i++) // enumerate row of T  
-        Tk[i]=perdersen_commit(g,row+i*colnum,colnum,W); // each thread use a different W
+    for (u64 i = 0; i < rownum; ++i)  //work for rownum 
+        workerq.Push(i);
+    for(int i=0;i<thread_n;i++)
+    {
+        //    Tk[i]=perdersen_commit(g,row+i*colnum,colnum,W); // each thread use a different W
+        thread t(int_commit_worker,std::ref(Tk),std::ref(g),std::ref(row),colnum,std::ref(W[i])); 
+        t.detach();
+    }
+    while(!workerq.Empty())
+        this_thread::sleep_for (std::chrono::microseconds(10));
+    while(endq.Size()!=rownum)
+        this_thread::sleep_for (std::chrono::microseconds(10));
+    endq.Clear();
+    assert(endq.Size()==0);
     t.stop("commit time(PPG) ");
+    for(int i=0;i<thread_n;i++)
+        delete [] W[i];
     delete []W;
+
     delete []row;
     return Tk;
 }
