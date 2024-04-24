@@ -81,11 +81,13 @@ Fr lagrange(Fr *r,int l,int k)
 }
 void brute_force_compute_LR(Fr* L,Fr* R,Fr* r,int l)
 {
-    for(int k=0;k<(1<<(l/2));k++)
-        L[k]=lagrange(r,l/2,k);
-    for(int k=0;k<(1<<(l/2));k++)
-        R[k]=lagrange(r+l/2,l/2,k);
+    int halfl=l/2,c=l-halfl;
+    for(int k=0;k<(1<<halfl);k++)
+        L[k]=lagrange(r,halfl,k);
+    for(int k=0;k<(1<<c);k++)
+        R[k]=lagrange(r+halfl,c,k);
 }
+
 Fr brute_force_compute_eval(Fr* w,Fr* r,int l)
 {
     Fr ret=0;
@@ -98,9 +100,9 @@ Fr brute_force_compute_eval(Fr* w,Fr* r,int l)
 G1 compute_Tprime(Fr* w,Fr* r,int l,G1* g,Fr* L,G1* Tk) 
 {
     //w has 2^l length
-    assert(l%2==0);
+    //assert(l%2==0);
     int halfl=l/2;
-    int rownum=(1<<halfl),colnum=(1<<halfl);
+    int rownum=(1<<halfl),colnum=(1<<(l-halfl));
     G1 ret=perdersen_commit(Tk,L,rownum);
     return ret;
 }
@@ -108,7 +110,7 @@ G1 compute_Tprime(Fr* w,Fr* r,int l,G1* g,Fr* L,G1* Tk)
 G1 compute_LT(Fr*w ,Fr*L,int l,G1*g,Fr*& ret) // L is row number length
 {
     int halfl=l/2;
-    int rownum=(1<<halfl),colnum=(1<<halfl);
+    int rownum=(1<<halfl),colnum=(1<<(l-halfl));
     Fr* res=new Fr[colnum];
     for(int j=0;j<colnum;j++)
     {
@@ -200,9 +202,10 @@ ThreadSafeQueue<int> workerq,endq;
 G1* prover_commit(Fr* w, G1* g, int l,int thread_n) //compute Tk
 {
     //w has 2^l length
-    assert(l%2==0);
+    cerr<<"call traditional slow commit"<<endl;
+    //assert(l%2==0);
     int halfl=l/2;
-    int rownum=(1<<halfl),colnum=(1<<halfl);
+    int rownum=(1<<halfl),colnum=(1<<(l-halfl));
     G1 *Tk=new G1[rownum];
     Fr* row=new Fr[1<<l];
     timer t;
@@ -235,10 +238,11 @@ void int_commit_worker(G1*& Tk,G1*& g, int*& row,int colnum,G1*& W)
 }
 G1* prover_commit(int* w, G1* g, int l,int thread_n) //compute Tk, int version with pippenger
 {
+    cerr<<"dog "<<thread_n<<endl;
     //w has 2^l length
-    assert(l%2==0);
+    //assert(l%2==0);
     int halfl=l/2;
-    int rownum=(1<<halfl),colnum=(1<<halfl);
+    int rownum=(1<<halfl),colnum=(1<<(l-halfl));
     G1 *Tk=new G1[rownum];
     int* row=new int[1<<l];
     timer t;
@@ -279,7 +283,7 @@ G1* prover_commit(int* w, G1* g, int l,int thread_n) //compute Tk, int version w
 Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l)  // nlogn brute force 
 {
     int halfl=l/2;
-    int rownum=(1<<halfl),colnum=(1<<halfl);
+    int rownum=(1<<halfl),colnum=(1<<(l-halfl));
     timer t(true);
     t.start();
     brute_force_compute_LR(L,R,r,l);
@@ -294,7 +298,7 @@ namespace hyrax
 void verify(Fr*w,Fr*r,Fr eval,G1&G,G1*g,Fr*L,Fr*R,G1*tk,int l)
 {
     int halfl=l/2;
-    int rownum=(1<<halfl),colnum=(1<<halfl);
+    int rownum=(1<<halfl),colnum=(1<<(l-halfl));
     Fr* LT=new Fr[colnum];
     timer t;
     t.start();
