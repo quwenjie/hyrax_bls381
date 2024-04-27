@@ -11,7 +11,6 @@ using namespace mcl::bn;
 using namespace hyrax;
 
 const int MAXL=26;
-
 ll ww[(1<<MAXL)];
 Fr w[(1<<MAXL)];
 Fr r[MAXL],L[1<<(MAXL/2)],R[1<<(MAXL/2)];
