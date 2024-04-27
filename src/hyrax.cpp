@@ -1,19 +1,88 @@
-#define DEBUG
 #include "hyrax.hpp"
 #include <cmath>
 using namespace std;
 using namespace mcl::bn;
 
 const int MAX_MSM_LEN=1e4;
-const int COMM_OPT_MAX=1e5; //don't optimize if larger than this
-const int logmax=18;  /// max number=2^18-1
+const int COMM_OPT_MAX=65536; //don't optimize if larger than this
+const int logmax=16;  /// max number=2^18-1
+const int block_num=4;
 
-inline G1 perdersen_commit(G1* g,int* f,int n,G1* W)
+inline G1 perdersen_commit(G1* g,ll* f,int n,G1* W)
 {
     G1 ret;
     ret.clear();
     //timer t(true);
     //t.start();
+    
+    bool *used=new bool[COMM_OPT_MAX*block_num];
+    memset(used,0,sizeof(bool)*COMM_OPT_MAX*block_num);
+    for(int i=0;i<n;i++)
+    {
+            if(f[i]==0)
+                continue;
+            
+            if(f[i]<0)
+            {
+                ll tmp=-f[i];
+                for(int j=0;j<block_num;j++)
+                {
+                    ll fnow=(tmp>>(logmax*j))&65535;
+                    W[fnow+(j<<logmax)]-=g[i];
+                    used[fnow+(j<<logmax)]=1;
+                }
+                //W[-f[i]]-=g[i];
+                //used[-f[i]]=1;
+                //assert(-f[i]<COMM_OPT_MAX);
+            }
+            else
+            {
+                ll tmp=f[i];
+                for(int j=0;j<block_num;j++)
+                {
+                    ll fnow=(tmp>>(logmax*j))&65535;
+                    W[fnow+(j<<logmax)]+=g[i];
+                    used[fnow+(j<<logmax)]=1;
+                }
+                //W[f[i]]+=g[i];
+                //used[f[i]]=1;
+                //assert(f[i]<COMM_OPT_MAX);
+            }
+    }
+    //t.stop("add ",false);
+    //const int logn=log2(COMM_OPT_MAX)+1;
+    G1 gg[logmax*block_num];
+    for(int j=0;j<logmax*block_num;j++)
+        gg[j].clear();
+    for(int j=0;j<COMM_OPT_MAX*block_num;j++)
+    {
+        if(used[j])
+        {
+            int jj=j%COMM_OPT_MAX;
+            int blk=j/COMM_OPT_MAX;
+            for(int k=0;k<logmax;k++)
+            {
+                if(jj&(1<<k))
+                    gg[k+logmax*blk]+=W[j];
+            }
+            W[j].clear();
+            used[j]=0;            
+        }
+    }
+    for(int j=0;j<logmax*4;j++)
+        ret+=gg[j]*(1ll<<j);
+    //t.stop("accu",false);
+    //t.stop("ALL: ",true);
+    delete []used;
+    return ret;
+}
+
+inline G1 perdersen_commit(G1* g,int* f,int n,G1* W)
+{
+    G1 ret;
+    ret.clear();
+    timer t(true);
+    t.start();
     bool *used=new bool[COMM_OPT_MAX];
     memset(used,0,sizeof(bool)*COMM_OPT_MAX);
     for(int i=0;i<n;i++)
@@ -34,10 +103,10 @@ inline G1 perdersen_commit(G1* g,int* f,int n,G1* W)
                 assert(f[i]<COMM_OPT_MAX);
             }
     }
-    //t.stop("add ",false);
+    t.stop("add ",false);
     const int logn=log2(COMM_OPT_MAX)+1;
-    G1 gg[logmax];
-    for(int j=0;j<logmax;j++)
+    G1 gg[40];
+    for(int j=0;j<logn;j++)
         gg[j].clear();
     for(int j=1;j<COMM_OPT_MAX;j++)
     {
@@ -52,10 +121,10 @@ inline G1 perdersen_commit(G1* g,int* f,int n,G1* W)
             used[j]=0;            
         }
     }
-    for(int j=0;j<logmax;j++)
+    for(int j=0;j<logn;j++)
         ret+=gg[j]*(1<<j);
-    //t.stop("accu",false);
-    //t.stop("ALL: ",true);
+    t.stop("accu",false);
+    t.stop("ALL: ",true);
     delete []used;
     return ret;
 }
@@ -236,9 +305,65 @@ void int_commit_worker(G1*& Tk,G1*& g, int*& row,int colnum,G1*& W)
             endq.Push(idx);
     }
 }
-G1* prover_commit(int* w, G1* g, int l,int thread_n) //compute Tk, int version with pippenger
+void ll_commit_worker(G1*& Tk,G1*& g, ll*& row,int colnum,G1*& W)
+{
+    int idx;
+    while (true)
+    {
+            bool ret=workerq.TryPop(idx);
+            if(ret==false)
+                return;
+            Tk[idx]=perdersen_commit(g,row+idx*colnum,colnum,W);
+            endq.Push(idx);
+    }
+}
+G1* prover_commit(ll* w, G1* g, int l,int thread_n) //compute Tk, int version with pippenger
 {
     cerr<<"dog "<<thread_n<<endl;
+    //w has 2^l length
+    //assert(l%2==0);
+    int halfl=l/2;
+    int rownum=(1<<halfl),colnum=(1<<(l-halfl));
+    G1 *Tk=new G1[rownum];
+    ll* row=new ll[1<<l];
+    timer t;
+    t.start();
+    G1** W=new G1*[thread_n];
+    for(int i=0;i<thread_n;i++)
+        W[i]=new G1[COMM_OPT_MAX*block_num];
+    for(int i=0;i<thread_n;i++)
+        memset(W[i],0,sizeof(G1)*COMM_OPT_MAX*block_num);
+    for(int i=0;i<rownum;i++) // enumerate row of T  
+    {
+        for(int j=0;j<colnum;j++)// enum col
+            row[i*colnum+j]=w[i+j*rownum];
+    }
+    for (u64 i = 0; i < rownum; ++i)  //work for rownum 
+        workerq.Push(i);
+    for(int i=0;i<thread_n;i++)
+    {
+        //    Tk[i]=perdersen_commit(g,row+i*colnum,colnum,W); // each thread use a different W
+        thread t(ll_commit_worker,std::ref(Tk),std::ref(g),std::ref(row),colnum,std::ref(W[i])); 
+        t.detach();
+    }
+    while(!workerq.Empty())
+        this_thread::sleep_for (std::chrono::microseconds(10));
+    while(endq.Size()!=rownum)
+        this_thread::sleep_for (std::chrono::microseconds(10));
+    endq.Clear();
+    assert(endq.Size()==0);
+    t.stop("commit time(PPG) ");
+    for(int i=0;i<thread_n;i++)
+        delete [] W[i];
+    delete []W;
+
+    delete []row;
+    return Tk;
+}
+
+G1* prover_commit(int* w, G1* g, int l,int thread_n) //compute Tk, int version with pippenger
+{
+    cerr<<"dog "<<thread_n<<" "<<l<<endl;
     //w has 2^l length
     //assert(l%2==0);
     int halfl=l/2;
@@ -257,14 +382,18 @@ G1* prover_commit(int* w, G1* g, int l,int thread_n) //compute Tk, int version w
         for(int j=0;j<colnum;j++)// enum col
             row[i*colnum+j]=w[i+j*rownum];
     }
+    t.stop("before thd ");
     for (u64 i = 0; i < rownum; ++i)  //work for rownum 
         workerq.Push(i);
+    t.stop("add them ");
     for(int i=0;i<thread_n;i++)
     {
         //    Tk[i]=perdersen_commit(g,row+i*colnum,colnum,W); // each thread use a different W
-        thread t(int_commit_worker,std::ref(Tk),std::ref(g),std::ref(row),colnum,std::ref(W[i])); 
-        t.detach();
+        thread tt(int_commit_worker,std::ref(Tk),std::ref(g),std::ref(row),colnum,std::ref(W[i])); 
+        tt.detach();
+        t.stop("add one by one");
     }
+    t.stop("fuck!");
     while(!workerq.Empty())
         this_thread::sleep_for (std::chrono::microseconds(10));
     while(endq.Size()!=rownum)

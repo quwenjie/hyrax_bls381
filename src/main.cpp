@@ -11,7 +11,7 @@ using namespace mcl::bn;
 using namespace hyrax;
 
 const int MAXL=26;
-int ww[(1<<MAXL)];
+ll ww[(1<<MAXL)];
 Fr w[(1<<MAXL)];
 Fr r[MAXL],L[1<<(MAXL/2)],R[1<<(MAXL/2)];
 G1 g[1<<(MAXL/2)];
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     int l=26;
     for(int i=0;i<(1<<l);i++)
     {
-        ww[i]=rand()%600-300;
+        ww[i]=(rand()%600-300)*100000;
         w[i]=ww[i];
     }
     for(int i=0;i<l;i++)
