@@ -1,4 +1,4 @@
-# Install script for directory: /mnt/c/Users/admin/zkTransformer/3rd/hyrax-bls12-381/src
+# Install script for directory: /mnt/c/Users/admin/Downloads/hyrax_bls381/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
