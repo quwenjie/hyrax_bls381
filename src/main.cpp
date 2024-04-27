@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     int l=20;
     for(int i=0;i<(1<<l);i++)
     {
-        ww[i]=1ll*(rand()%600-300);
+        ww[i]=1ll*(rand()%600-300)*rand();
         w[i]=ww[i];
     }
     for(int i=0;i<l;i++)

@@ -51,8 +51,8 @@ inline G1 perdersen_commit(G1* g,ll* f,int n,G1* W)
     }
     //t.stop("add ",false);
     //const int logn=log2(COMM_OPT_MAX)+1;
-    G1 gg[logmax*4];
-    for(int j=0;j<logmax*4;j++)
+    G1 gg[logmax*block_num];
+    for(int j=0;j<logmax*block_num;j++)
         gg[j].clear();
     for(int j=0;j<COMM_OPT_MAX*block_num;j++)
     {
@@ -70,7 +70,7 @@ inline G1 perdersen_commit(G1* g,ll* f,int n,G1* W)
         }
     }
     for(int j=0;j<logmax*4;j++)
-        ret+=gg[j]*(1<<j);
+        ret+=gg[j]*(1ll<<j);
     //t.stop("accu",false);
     //t.stop("ALL: ",true);
     delete []used;
