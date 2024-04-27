@@ -55,7 +55,6 @@ Pack bullet_reduce(G1 gamma, Fr*a,G1*g,int n,G1& G,Fr* x,Fr y,bool need_free=fal
 bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n);
 G1* prover_commit(ll* w, G1* g, int l,int thread_n=1);
 G1* prover_commit(Fr* w, G1* g, int l,int thread=1);
-G1* prover_commit(ll* w, G1* g, int l,int thread=1);
 G1* prover_commit(int* w, G1* g, int l,int thread=1);
 Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l);  // nlogn brute force 
 namespace hyrax
