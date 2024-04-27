@@ -1,3 +1,4 @@
+#undef NDEBUG
 #include "hyrax.hpp"
 #include <cmath>
 using namespace std;
@@ -263,8 +264,18 @@ bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n
     Pack p=bullet_reduce(gamma,a,g,n,G,x,y);
     assert(p.y==p.x*p.a);
     assert(p.gamma==p.g*p.x+G*p.y);
-    cout<<"Hyrax: All check passed!!!"<<endl;
-    return true;
+    if(p.y==p.x*p.a && p.gamma==p.g*p.x+G*p.y)
+    {
+        cout<<"Hyrax: All check passed!!!"<<endl;
+        return true;
+    }
+    else
+    {
+        cout<<"Hyrax check failed!"<<endl;
+        return false;
+    }
+
+    
 }
 ThreadSafeQueue<int> workerq,endq;
 
