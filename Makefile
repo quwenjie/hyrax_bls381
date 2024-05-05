@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /mnt/c/Users/admin/Downloads/hyrax_bls381
+CMAKE_SOURCE_DIR = /mnt/c/Users/admin/t/zkTransformer/3rd/hyrax-bls12-381
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /mnt/c/Users/admin/Downloads/hyrax_bls381
+CMAKE_BINARY_DIR = /mnt/c/Users/admin/t/zkTransformer/3rd/hyrax-bls12-381
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -132,9 +132,9 @@ install/strip/fast: preinstall/fast
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/admin/Downloads/hyrax_bls381/CMakeFiles /mnt/c/Users/admin/Downloads/hyrax_bls381//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/admin/t/zkTransformer/3rd/hyrax-bls12-381/CMakeFiles /mnt/c/Users/admin/t/zkTransformer/3rd/hyrax-bls12-381//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/admin/Downloads/hyrax_bls381/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /mnt/c/Users/admin/t/zkTransformer/3rd/hyrax-bls12-381/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -214,19 +214,6 @@ mcl_st/fast:
 .PHONY : mcl_st/fast
 
 #=============================================================================
-# Target rules for targets named msm_avx.o
-
-# Build rule for target.
-msm_avx.o: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 msm_avx.o
-.PHONY : msm_avx.o
-
-# fast build rule for target.
-msm_avx.o/fast:
-	$(MAKE) $(MAKESILENT) -f 3rd/mcl/CMakeFiles/msm_avx.o.dir/build.make 3rd/mcl/CMakeFiles/msm_avx.o.dir/build
-.PHONY : msm_avx.o/fast
-
-#=============================================================================
 # Target rules for targets named mclbn256
 
 # Build rule for target.
@@ -277,7 +264,6 @@ help:
 	@echo "... install/strip"
 	@echo "... list_install_components"
 	@echo "... rebuild_cache"
-	@echo "... msm_avx.o"
 	@echo "... hyrax_lib"
 	@echo "... hyrax_time"
 	@echo "... mcl"
