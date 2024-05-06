@@ -26,8 +26,6 @@ void field(const char* f,Fr x)
 int main(int argc, char *argv[])
 {
     initPairing(mcl::BLS12_381);
-    Fr x(-9),y(14);
-    cout<<x<<" "<<y<<endl;
     int l=23;
     for(int i=0;i<(1<<l)-100;i++)
     {
@@ -42,15 +40,6 @@ int main(int argc, char *argv[])
             ww[i]=(1ll<<63)-i;
         w[i]=ww[i];
     }
-    //cout<<(ww[(1<<l)-40000]>(((ll)1)<<66))<<endl;
-    //cout<<(ww[(1<<l)-40000]>(((ll)1)<<64))<<endl;
-    //cout<<(ww[(1<<l)-40000]>(((ll)1)<<68))<<endl;
-    /*Fr a0=Fr(ww[(1<<l)-40000]*4);
-    Fr a1=Fr(ww[(1<<l)-40000]);
-    Fr a2=Fr(((ll)1)<<66);
-    Fr a3=Fr(((ll)1)<<64);
-    cout<<a1<<" "<<a1-ww[(1<<l)-40000]<<endl;;
-    */
    
     for(int i=0;i<l;i++)
         r[i].setByCSPRNG();
@@ -58,10 +47,7 @@ int main(int argc, char *argv[])
     timer t;
     t.start();
     G1*tk=prover_commit(ww,g,l,16);  //77s, ppg: 
-    cout<<w[(1<<l)-40000]<<endl;
-    field("ATC ",w[(1<<l)-40000]);
-    cerr<<"end here"<<endl;
-    //w[0]+=1;
+    //t.stop("commit time: ");
     Fr eva=prover_evaluate(w,r,G,g,L,R,l);
     hyrax::verify(w,r,eva,G,g,L,R,tk,l);  // tprime, comm_w ,R,g,G public, LT eval only prover knows
     t.stop("All time: ");

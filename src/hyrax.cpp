@@ -19,6 +19,13 @@ G1 perdersen_commit(G1* g,ll* f,int n,G1* W)
     
     bool *used=new bool[COMM_OPT_MAX*block_num];
     memset(used,0,sizeof(bool)*COMM_OPT_MAX*block_num);
+    ll bar[10];
+    ll bar_t=1;
+    for(int i=0;i<8;i++)
+    {
+        bar[i]=bar_t;
+        bar_t<<=logmax;
+    }
     for(int i=0;i<n;i++)
     {
             if(f[i]==0)
@@ -29,6 +36,8 @@ G1 perdersen_commit(G1* g,ll* f,int n,G1* W)
                 ll tmp=-f[i];
                 for(int j=0;j<block_num;j++)
                 {
+                    if(tmp<bar[j])
+                        break;
                     ll fnow=(tmp>>(logmax*j))&65535;
                     W[fnow+(j<<logmax)]-=g[i];
                     used[fnow+(j<<logmax)]=1;
@@ -39,6 +48,8 @@ G1 perdersen_commit(G1* g,ll* f,int n,G1* W)
                 ll tmp=f[i];
                 for(int j=0;j<block_num;j++)
                 {
+                    if(tmp<bar[j])
+                        break;
                     ll fnow=(tmp>>(logmax*j))&65535;
                     W[fnow+(j<<logmax)]+=g[i];
                     used[fnow+(j<<logmax)]=1;
