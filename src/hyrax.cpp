@@ -289,7 +289,7 @@ bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n
 
     
 }
-ThreadSafeQueue<int> workerq,endq;
+static ThreadSafeQueue<int> workerq,endq;
 
 G1* prover_commit(Fr* w, G1* g, int l,int thread_n) //compute Tk
 {
