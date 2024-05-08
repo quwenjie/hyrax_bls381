@@ -10,3 +10,5 @@ CMakeCache.txt
 src/hyrax_time
 src/*.a
 src/Makefile
+src/*.cmake
+Makefile
