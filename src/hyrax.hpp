@@ -42,9 +42,8 @@ struct Pack
         y=yy;
     }
 };
-G1 perdersen_commit(G1* g,Fr* f,int n);
-G1 perdersen_commit(G1* g,int* f,int n,G1* W=NULL); //optimized using pippenger
-G1 perdersen_commit(G1* g,ll* f,int n,G1* W=NULL); //support 2^63
+
+G1 perdersen_commit(G1* g,ll* f,int n,G1* W=NULL); //support 2^80, optimized using pippenger
 Fr lagrange(Fr *r,int l,int k);
 void brute_force_compute_LR(Fr* L,Fr* R,Fr* r,int l);
 Fr brute_force_compute_eval(Fr* w,Fr* r,int l);
