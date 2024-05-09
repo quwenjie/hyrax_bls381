@@ -26,13 +26,13 @@ void field(const char* f,Fr x)
 int main(int argc, char *argv[])
 {
     initPairing(mcl::BLS12_381);
-    int l=23;
+    int l=25;
     for(int i=0;i<(1<<l)-100;i++)
     {
         ww[i]=1ll*(rand()%2000-1000);
         w[i]=ww[i];
     }
-    for(int i=(1<<l)-50000;i<(1<<l);i++)
+    for(int i=(1<<l)-50;i<(1<<l);i++)
     {
         if(i&1)
             ww[i]=1ll<<63;
@@ -43,7 +43,9 @@ int main(int argc, char *argv[])
    
     for(int i=0;i<l;i++)
         r[i].setByCSPRNG();
-    G1 G=gen_gi(g,1<<(l/2));
+    int rownum=1<<(l/2);
+    int colnum=1<<(l-l/2);
+    G1 G=gen_gi(g,colnum);
     timer t;
     t.start();
     G1*tk=prover_commit(ww,g,l,16);  //77s, ppg: 
