@@ -326,18 +326,12 @@ G1* prover_commit(ll* w, G1* g, int l,int thread_n) //compute Tk, int version wi
     cout<<"finish allocate mem "<<endl;
     for(int i=0;i<thread_n;i++)
         memset(W[i],0,sizeof(G1)*COMM_OPT_MAX*block_num);
-    for(int i=0;i<rownum;i++) // enumerate row of T  
-    {
-        for(int j=0;j<colnum;j++)// enum col
-            row[i*colnum+j]=w[i*colnum+j];
-    }
     for (u64 i = 0; i < rownum; ++i)  //work for rownum 
         workerq.Push(i);
     cout<<"gg in thread "<<endl;
     for(int i=0;i<thread_n;i++)
     {
-        //    Tk[i]=perdersen_commit(g,row+i*colnum,colnum,W); // each thread use a different W
-        thread t(ll_commit_worker,std::ref(Tk),std::ref(g),std::ref(row),colnum,std::ref(W[i])); 
+        thread t(ll_commit_worker,std::ref(Tk),std::ref(g),std::ref(w),colnum,std::ref(W[i])); 
         t.detach();
     }
     while(!workerq.Empty())
@@ -350,8 +344,6 @@ G1* prover_commit(ll* w, G1* g, int l,int thread_n) //compute Tk, int version wi
     for(int i=0;i<thread_n;i++)
         delete [] W[i];
     delete []W;
-
-    delete []row;
     return Tk;
 }
 
