@@ -8,7 +8,7 @@ const int MAX_MSM_LEN=1e4;
 const int COMM_OPT_MAX=65536; //don't optimize if larger than this
 const int logmax=16;  /// max number=2^18-1
 const int block_num=5;  //2^80
-
+static ThreadSafeQueue<int> workerq,endq;
 
 G1 perdersen_commit(G1* g,ll* f,int n,G1* W)
 {
@@ -189,6 +189,23 @@ G1 compute_Tprime(Fr* w,Fr* r,int l,G1* g,Fr* R,G1* Tk)
     return ret;
 }
 
+void open_worker(Fr*& res,Fr*& R, Fr*& w,int rownum,int colnum)
+{
+    int idx;
+    while (true)
+    {
+        bool ret=workerq.TryPop(idx);
+        if(ret==false)
+            return;
+        for(int i=0;i<rownum;i++)
+        {
+            if(!w[idx+i*colnum].isZero())
+                res[idx]+=R[i]*w[idx+i*colnum];  // mat mult  (1,row)*(row,col)=(1,col)
+        }
+        endq.Push(idx);
+    }
+}
+
 G1 compute_RT(Fr*w ,Fr*R,int l,G1*g,Fr*& ret) // L is row number length
 {
     int halfl=l/2;
@@ -196,12 +213,19 @@ G1 compute_RT(Fr*w ,Fr*R,int l,G1*g,Fr*& ret) // L is row number length
     Fr* res=new Fr[colnum];
     for(int i=0;i<colnum;i++)
         res[i]=0;
-    for(int j=0;j<colnum;j++)
-    for(int i=0;i<rownum;i++)
+    
+    for (u64 i = 0; i < colnum; ++i)  //work for rownum 
+        workerq.Push(i);
+    cout<<"gg in thread "<<endl;
+    const int thread_n=16;
+    for(int i=0;i<thread_n;i++)
     {
-        if(!w[j+i*colnum].isZero())
-            res[j]+=R[i]*w[j+i*colnum];  // mat mult  (1,row)*(row,col)=(1,col)
+        thread t(open_worker,std::ref(res),std::ref(R),std::ref(w),rownum,colnum); 
+        t.detach();
     }
+    while(endq.Size()!=colnum)
+        this_thread::sleep_for (std::chrono::microseconds(1));
+    endq.Clear();
     G1 comm=perdersen_commit(g,res,colnum);
     ret=res;
     return comm;
@@ -293,7 +317,7 @@ bool prove_dot_product(G1 comm_x, G1 comm_y, Fr* a, G1*g ,G1& G,Fr* x,Fr y,int n
 
     
 }
-static ThreadSafeQueue<int> workerq,endq;
+
 
 
 void ll_commit_worker(G1*& Tk,G1*& g, ll*& row,int colnum,G1*& W)
@@ -356,10 +380,7 @@ Fr prover_evaluate(Fr*w ,Fr*r,G1& G,G1* g, Fr*L,Fr*R,int l)  // nlogn brute forc
     timer t(true);
     t.start();
     brute_force_compute_LR(L,R,r,l);
-    
-    //t.stop("brute force LR ",false);
     Fr eval=brute_force_compute_eval(w,r,l);
-    //t.stop("eval ",false);
     t.stop("eval total ",true,false);
     return eval;
 }
@@ -372,7 +393,10 @@ void verify(Fr*w,Fr*r,Fr eval,G1&G,G1*g,Fr*L,Fr*R,G1*tk,int l)
     timer verf;
     verf.start();
     Fr* RT=new Fr[colnum];
-    compute_RT(w,R,l,g,RT);  //TODO: remove, seems useless
+    timer rt;
+    rt.start();
+    compute_RT(w,R,l,g,RT);  
+    rt.stop("compute rt:");
     G1 tprime=compute_Tprime(w,r,l,g,R,tk);
     prove_dot_product(tprime, G*eval, L, g , G,RT,eval,colnum);
     verf.stop("total verify :");

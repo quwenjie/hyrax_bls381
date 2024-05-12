@@ -10,11 +10,11 @@ using namespace std;
 using namespace mcl::bn;
 using namespace hyrax;
 
-const int MAXL=26;
+const int MAXL=29;
 ll ww[(1<<MAXL)];
 Fr w[(1<<MAXL)];
-Fr r[MAXL],L[1<<(MAXL/2)],R[1<<(MAXL/2)];
-G1 g[1<<(MAXL/2)];
+Fr r[MAXL],L[1<<(MAXL/2+1)],R[1<<(MAXL/2+1)];
+G1 g[1<<(MAXL/2+1)];
 void field(const char* f,Fr x)
 {
     if(x.isNegative())
@@ -26,7 +26,7 @@ void field(const char* f,Fr x)
 int main(int argc, char *argv[])
 {
     initPairing(mcl::BLS12_381);
-    int l=25;
+    int l=28;
     for(int i=0;i<(1<<l)-100;i++)
     {
         ww[i]=1ll*(rand()%2000-1000);
